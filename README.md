@@ -1,8 +1,9 @@
 angular-quill
 ================
 
-Angular Quill is an angular directive for the Quill editor.  http://quilljs.com/
+Angular Quill is an angular directive for the Quill editor. http://quilljs.com/
 
+This version was forked and modified to support Quill v1.0+, and has been tested with Quill v1.1.0 and AngularJS v1.5.8.
 
 Usage
 --------------
@@ -29,9 +30,12 @@ With Options
 ```html
  <div ng-model="article" quill="{
       modules: {
-        'toolbar': { container: '.toolbar' },
-        'image-tooltip': false,
-        'link-tooltip': false
+        'toolbar': [
+            [{ 'header': [2, 3, 4, false] }],
+            ['bold', 'italic', 'strike'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['link', 'image']
+        ]
       },
       theme: 'snow'
     }"></div>
@@ -39,9 +43,3 @@ With Options
 
 You can pass options directly to Quill editor by specifying them as the value of the `quill` attribute.
 
-
-Bower Installation
---------------
-```js
-bower install angular-quill
-```

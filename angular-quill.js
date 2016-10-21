@@ -1,82 +1,79 @@
-(function () {
-  'use strict';
+(function() {
+'use strict';
 
-  /**
-   * usage: <div ng-model="article.body" quill="{
-      theme: 'mytheme'
-    }"></div>
-   *
-   *    extra options:
-   *      quill: pass as a string
-   *
-   */
+/**
+ * usage: <div ng-model="article.body" quill="{
+    theme: 'mytheme'
+  }"></div>
+ *
+ *    extra options:
+ *      quill: pass as a string
+ *
+ * bevvyco: updated to work with Quill 1.0+
+ */
 
-  var scripts = document.getElementsByTagName("script"),
-      currentScriptPath = scripts[scripts.length-1].src;
+angular
+    .module('angular-quill', [])
+    .directive("quill", ['$timeout', function($timeout) {
+        return {
+            restrict: 'A',
+            require: "ngModel",
+            template: '<div class="quill-wrapper"><div class="editor"></div></div>',
+            controller: function() {
 
-  angular.module('angular-quill', [])
-    .directive("quill", ['$timeout', function ($timeout) {
-      return {
-        restrict: 'A',
-        require: "ngModel",
-        replace: true,
-        templateUrl: currentScriptPath.replace('.js', '.html'),
-        controller: function () {
-
-        },
-        link: function (scope, element, attrs, ngModel) {
-
-          var updateModel = function updateModel(value) {
-              scope.$apply(function () {
-                ngModel.$setViewValue(value);
-              });
             },
-            options = {
-              modules: {
-                'toolbar': { container: '.toolbar' },
-                'image-tooltip': true,
-                'link-tooltip': true
-              },
-              theme: 'snow'
-            },
-            extraOptions = attrs.quill ?
-                                scope.$eval(attrs.quill) : {},
-            editor;
+            link: function(scope, element, attrs, ngModel) {
 
-          angular.extend(options, extraOptions);
-          
-          $timeout(function () {
+                var updateModel = function updateModel(value) {
+                        scope.$apply(function() {
+                            ngModel.$setViewValue(value);
+                        });
+                    },
+                    options = {
+                        // debug: 'info',
+                        formats: ['bold','italic','strike','link','image','header','list'], // what's allowed
+                        modules: {
+                            'toolbar': [
+                                [{ 'header': [2, 3, 4, false] }],
+                                ['bold', 'italic', 'strike'],
+                                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                                ['link']
+                                // ['link', 'image']
+                            ]
+                        },
+                        theme: 'snow'
+                    },
+                    extraOptions = attrs.quill ? scope.$eval(attrs.quill) : {},
+                    editor;
 
-            editor = new Quill(element.children()[1], options);
+                angular.extend(options, extraOptions);
 
-            ngModel.$render();
+                $timeout(function() {
+                    editor = new Quill(element[0].querySelector('.editor'), options);
 
-            editor.on('text-change', function(delta, source) {
-              updateModel(this.getHTML());
-            });
+                    ngModel.$render();
 
-            editor.once('selection-change', function(hasFocus) {
-              $(editor).toggleClass('focus', hasFocus);
-              // Hack for inability to scroll on mobile
-              if (/mobile/i.test(navigator.userAgent)) {
-                $(editor).css('height', quill.root.scrollHeight + 30)   // 30 for padding
-              }
-            });
+                    editor.on('text-change', function(delta, oldContents, source) {
+                        updateModel(editor.scroll.domNode.innerHTML);
+                    });
+                });
 
-          });
+                ngModel.$render = function() {
+                    if (angular.isDefined(editor)) {
+                        $timeout(function() {
+                            editor.pasteHTML(ngModel.$viewValue || '');     // makes editor dirty
 
+                            // reset model and form to pristine, as we've only initialized
+                            // with existing content and no changes have been made yet
+                            ngModel.$$parentForm.$setPristine();
 
-          ngModel.$render = function () {
-            if (angular.isDefined(editor)) {
-              $timeout(function() {
-                editor.setHTML(ngModel.$viewValue || '');
-              });
+                            // quill editor now initialized
+                        });
+                    }
+                };
+
             }
-
-          };
-
-        }
-      };
+        };
     }]);
-})();
 
+})();
