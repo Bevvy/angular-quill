@@ -26,7 +26,11 @@ angular
 
                 var updateModel = function updateModel(value) {
                         scope.$apply(function() {
-                            ngModel.$setViewValue(value);
+                            if (value.trim()!=='<p></p>' && value.trim()!=='<p><br></p>') {
+                                // Quill's representation of empty content uses an empty <p> tag
+                                // so ignore that, and only update the model if has real content
+                                ngModel.$setViewValue(value);
+                            }
                         });
                     },
                     options = {
